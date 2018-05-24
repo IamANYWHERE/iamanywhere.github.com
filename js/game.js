@@ -305,6 +305,11 @@
        self.score+=10;
        self.updateScore(self.score);
      },
+     /**
+      * 判断玩家视角，根据视角转换上下左右方向
+      * 根据键盘keyCode判断按键，上下左右w、s、a、d
+      * @param code
+      */
      changeDirection:function(code){
          var self=this;
          if (self.wdirection === 0) {
@@ -465,6 +470,10 @@
              }
          }
      },
+     /**
+      * 玩家视角变化后
+      * 更新键盘控制方向
+      */
      onCameraChange:function(){
          var self=this;
          if (self.camerapostion.x === self.camera.position.x &&
@@ -492,14 +501,22 @@
                  self.wdirection=2
              }
          }
-         console.log("direction="+self.direction);
      },
+     /**
+      * 更新蛇的颜色
+      */
      updateSnakeColor:function(){
        var self=this;
        if (self.updateColor===true){
            self.changeColor(self.colorIndex);
        }
      },
+     /**
+      * 根据色号，让蛇渐变到这个色号
+      * 判断自己和目标色号rgb三原色的大小
+      * 对三原色进行增减
+      * @param index
+      */
      changeColor:function(index){
          var self=this;
          var color=self.balls[0].material.color.getHex();
@@ -507,9 +524,10 @@
              self.updateColor=false;
          }
 
-         var r1=color>>>16,r2=self.colors[index].color>>>16;
-         var g1=color&0x00ff00,g2=self.colors[index].color&0x00ff00;
-         var b1=color&0x0000ff,b2=self.colors[index].color&0x0000ff;
+         var r1=color>>>16,r2=self.colors[index].color>>>16;         //只留下R部位的颜色
+         var g1=color&0x00ff00,g2=self.colors[index].color&0x00ff00; //只留下g部位的颜色
+         var b1=color&0x0000ff,b2=self.colors[index].color&0x0000ff; //只留下b部位的颜色
+
          if (r1 < r2) {
              self.balls[0].material.color.set(self.balls[0].material.color.getHex()+self.rgb1);
          }else if (r1 > r2) {
@@ -525,28 +543,18 @@
          }else if (b1 > b2) {
              self.balls[0].material.color.set(self.balls[0].material.color.getHex()-self.rgb3);
          }
-         console.log("color="+self.balls[0].material.color.getHexString())
-         /*if (color < self.colors[index].color) {
-             if (color+self.rgb1<=self.colors[index].color){
-                 self.balls[0].material.color.set(color+self.rgb1);
-             } else if (color + self.rgb2 <= self.colors[index].color) {
-                 self.balls[0].material.color.set(color+self.rgb2);
-             }else if (color + self.rgb3 <= self.colors[index].color) {
-                 self.balls[0].material.color.set(color+self.rgb3);
-             }
-         }else if (color > self.colors[index].color) {
-             if (color-self.rgb1>=self.colors[index].color){
-                 self.balls[0].material.color.set(color-self.rgb1);
-             } else if (color-self.rgb2 >= self.colors[index].color) {
-                 self.balls[0].material.color.set(color-self.rgb2);
-             }else if (color - self.rgb3 >= self.colors[index].color) {
-                 self.balls[0].material.color.set(color-self.rgb3);
-             }
-         }*/
      },
+     /**
+      * 获取从mian.js中获取的成功吃到食物的更新函数
+      * @param success 函数
+      */
      addSuccessFn:function(success){
          this.updateScore=success;
      },
+     /**
+      * 获取从main.js中获取的失败的函数
+      * @param failed
+      */
      addFailedFn:function(failed){
          this.failed=failed;
      },
@@ -563,6 +571,9 @@
              this.scene.add(sphere);
          }
      },
+     /**
+      * 当蛇暂停后，其他物体继续更新
+      */
      updateOnStop:function(){
          var self=this;
          self.my_render();
@@ -575,6 +586,9 @@
       * 在将要移动的方向上添加鳞片（球，球心之间的距离为最小移动距离speed），没隔speed距离添加一个鳞片，添加times个，
       * 去除蛇尾部的鳞片times个
       * 达到移动的效果
+      *
+      * 蛇运动过程中更新食物和蛇自身的长度和色彩
+      * 当视角改变的时候，更新键盘控制方向
       */
      moveSnake:function(){
          var self=this;
@@ -635,6 +649,10 @@
              self.moveSnake();
          })
      },
+     /**
+      * 蛇在Y轴上移动
+      * 只能在25到-25之间
+      */
      downSnake:function(){
        var self=this;
          if (self.underground === false) {
@@ -647,6 +665,13 @@
            }
        }
      },
+     /**
+      * 检测碰撞
+      * 根据自身中心到自身几何体中的点的向量的射线
+      * 判断是否和物体有交点，当有交点时，判断中心到交点的距离是否小于之前向量的距离
+      * 小于说明碰撞，大于等于说明没有碰撞
+      * @returns {*}
+      */
      getCrashObject:function(){
          var self=this;
          var originPoint=self.balls[0].position.clone();
@@ -694,6 +719,9 @@
          var self=this;
          self.renderer.render(self.scene,self.camera);
      },
+     /**
+      * 根据动画id取消动画
+      */
      stop:function(){
          var self=this;
          if (self.animateId !== null) {
@@ -701,10 +729,17 @@
              self.animateId=null;
          }
      },
+     /**
+      * 蛇吃食物时的动画
+      */
      eatFoodAnimation:function(){
          var self=this;
          createjs.Tween.get(self.balls[0].scale).to({x:2,y:2,z:2},500,createjs.Ease.cubicOut).to({x:1,y:1,z:1},500);
      },
+     /**
+      * 食物被吃掉时的动画，没做- -
+      * @param food
+      */
      foodAteAnimation:function(food){
          var self=this;
          self.scene.remove(food);
@@ -712,6 +747,7 @@
 
      /**
       * 当w,s,a,d键盘被按后起来时，改变方向
+      *
       * @param event
       */
      handleKeyUp:function (event) {
@@ -727,6 +763,7 @@
                  }
                  console.log('underground='+self.underground);
                  break
+             //enter启动或者暂停
              case 13:
                  if (this.isStart === false) {
                      self.stop();
@@ -738,11 +775,18 @@
                      this.isStart=false;
                  }
                  break
+             //i键重新开始
              case 73:
                  restart();
                  break
          }
      },
+     /**
+      * 重新开始游戏
+      * 如果游戏还在运行停止游戏
+      * 初始化分数、方向、游戏状态、蛇颜色更新状态和蛇颜色
+      * 初始化蛇身体和食物
+      */
      restart:function () {
          var self=this;
          if (self.isStart === true) {
